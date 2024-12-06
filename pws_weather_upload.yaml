@@ -1,0 +1,287 @@
+blueprint:
+  name: PWS Weather Upload
+  description: >
+    Upload weather data from Home Assistant to PWSWeather API.
+
+    As a pre-requisite, add the following to your configuration.yaml:
+    shell_command:
+      curl_post: "curl -X POST \"{{ url }}\""
+
+  domain: automation
+  input:
+    ID:
+      name: Station ID
+      description: Your PWSWeather station ID (required)
+      selector:
+        text: {}
+      default: ''
+    PASSWORD:
+      name: API Key
+      description: Your PWSWeather API key (required)
+      selector:
+        text: {}
+      default: ''
+    tempf_entity:
+      name: Temperature Sensor
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+      default: ''
+    humidity_entity:
+      name: Humidity Sensor
+      selector:
+        entity:
+          domain: sensor
+          device_class: humidity
+      default: ''
+    baromin_entity:
+      name: Barometric Pressure Sensor
+      selector:
+        entity:
+          domain: sensor
+          device_class: pressure
+      default: ''
+    winddir_entity:
+      name: Wind Direction/Angle (in Degrees)
+      selector:
+        entity:
+          domain: sensor
+      default: ''
+    windspeedmph_entity:
+      name: Wind Speed Sensor
+      selector:
+        entity:
+          domain: sensor
+          device_class: wind_speed
+      default: ''
+    windgustmph_entity:
+      name: Wind Gust Sensor
+      selector:
+        entity:
+          domain: sensor
+          device_class: wind_speed
+      default: ''
+    rainin_entity:
+      name: Hourly Rainfall (in millimeters or inches)
+      selector:
+        entity:
+          domain: sensor
+          device_class: precipitation
+      default: ''
+    dailyrainin_entity:
+      name: Daily Rainfall (in millimeters or inches)
+      selector:
+        entity:
+          domain: sensor
+          device_class: precipitation
+      default: ''
+    solarradiation_entity:
+      name: Solar Radiation Sensor (in W/m2)
+      selector:
+        entity:
+          domain: sensor
+      default: ''
+    UV_entity:
+      name: UV Index Sensor
+      selector:
+        entity:
+          domain: sensor
+      default: ''
+    calculate_dewpt:
+      name: Calculate Dew Point
+      description: Calculate dew point if temperature and humidity sensors are available.
+      selector:
+        boolean: {}
+      default: true
+    trigger_entities:
+      name: Trigger Entities
+      description: Entities to trigger the automation upon state changes (e.g., temperature, humidity)
+      selector:
+        entity:
+          multiple: true
+          filter:
+            domain: sensor
+      default: ''
+    curl_command_service:
+      name: CURL Command Service
+      selector:
+        text: {}
+      default: shell_command.curl_post
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input trigger_entities
+
+variables:
+  station_id: !input ID
+  station_key: !input PASSWORD
+  baromin_entity: !input baromin_entity
+  tempf_entity: !input tempf_entity
+  humidity_entity: !input humidity_entity
+  winddir_entity: !input winddir_entity
+  windspeedmph_entity: !input windspeedmph_entity
+  windgustmph_entity: !input windgustmph_entity
+  rainin_entity: !input rainin_entity
+  dailyrainin_entity: !input dailyrainin_entity
+  solarradiation_entity: !input solarradiation_entity
+  UV_entity: !input UV_entity
+  calculate_dewpt: !input calculate_dewpt
+
+  baromin: >
+    {% if baromin_entity != '' and states(baromin_entity) is not none %}
+      {% set unit = state_attr(baromin_entity, 'unit_of_measurement') %}
+      {% if unit == 'hPa' %}
+        {{ (states(baromin_entity) | float) / 33.8639 }}
+      {% else %}
+        {{ states(baromin_entity) | float }}
+      {% endif %}
+    {% else %}
+      none
+    {% endif %}
+
+  tempf: >
+    {% if tempf_entity != '' and states(tempf_entity) is not none %}
+      {% set unit = state_attr(tempf_entity, 'unit_of_measurement') %}
+      {% if unit == '°C' %}
+        {{ (states(tempf_entity) | float) * 1.8 + 32 }}
+      {% else %}
+        {{ states(tempf_entity) | float }}
+      {% endif %}
+    {% else %}
+      none
+    {% endif %}
+
+  humidity: >
+    {% if humidity_entity != '' and states(humidity_entity) is not none %}
+      {{ states(humidity_entity) | float }}
+    {% else %}
+      none
+    {% endif %}
+
+  winddir: >
+    {% if winddir_entity != '' and states(winddir_entity) is not none %}
+      {{ states(winddir_entity) | float }}
+    {% else %}
+      none
+    {% endif %}
+
+  windspeedmph: >
+    {% if windspeedmph_entity != '' and states(windspeedmph_entity) is not none %}
+      {% set unit = state_attr(windspeedmph_entity, 'unit_of_measurement') %}
+      {% if unit == 'km/h' %}
+        {{ (states(windspeedmph_entity) | float) * 0.621371 }}
+      {% else %}
+        {{ states(windspeedmph_entity) | float }}
+      {% endif %}
+    {% else %}
+      none
+    {% endif %}
+
+  windgustmph: >
+    {% if windgustmph_entity != '' and states(windgustmph_entity) is not none %}
+      {% set unit = state_attr(windgustmph_entity, 'unit_of_measurement') %}
+      {% if unit == 'km/h' %}
+        {{ (states(windgustmph_entity) | float) * 0.621371 }}
+      {% else %}
+        {{ states(windgustmph_entity) | float }}
+      {% endif %}
+    {% else %}
+      none
+    {% endif %}
+
+  rainin: >
+    {% if rainin_entity != '' and states(rainin_entity) is not none %}
+      {% set unit = state_attr(rainin_entity, 'unit_of_measurement') %}
+      {% if unit == 'mm' %}
+        {{ (states(rainin_entity) | float) * 0.0393701 }}
+      {% else %}
+        {{ states(rainin_entity) | float }}
+      {% endif %}
+    {% else %}
+      none
+    {% endif %}
+
+  dailyrainin: >
+    {% if dailyrainin_entity != '' and states(dailyrainin_entity) is not none %}
+      {% set unit = state_attr(dailyrainin_entity, 'unit_of_measurement') %}
+      {% if unit == 'mm' %}
+        {{ (states(dailyrainin_entity) | float) * 0.0393701 }}
+      {% else %}
+        {{ states(dailyrainin_entity) | float }}
+      {% endif %}
+    {% else %}
+      none
+    {% endif %}
+
+  solarradiation: >
+    {% if solarradiation_entity != '' and states(solarradiation_entity) is not none %}
+      {{ states(solarradiation_entity) | float }}
+    {% else %}
+      none
+    {% endif %}
+
+  UV: >
+    {% if UV_entity != '' and states(UV_entity) is not none %}
+      {{ states(UV_entity) | int }}
+    {% else %}
+      none
+    {% endif %}
+
+  dewptf: >
+    {% if calculate_dewpt and tempf != 'none' and humidity != 'none' %}
+      {% set T = tempf | float %}
+      {% set RH = humidity | float %}
+      {# Convert F to C for dew point calculation #}
+      {% set T_C = (T - 32) / 1.8 %}
+      {% set A = 17.27 %}
+      {% set B = 237.7 %}
+      {% set alpha = (A * T_C / (B + T_C)) + (RH/100) %}
+      {% set dewpt_C = (B * alpha) / (A - alpha) %}
+      {% set dewpt_F = (dewpt_C * 1.8) + 32 %}
+      {{ dewpt_F }}
+    {% else %}
+      none
+    {% endif %}
+
+  payload: >
+    {% set data = namespace(sensors=[]) %}
+    {% for i in [
+          ['ID', station_id],
+          ['PASSWORD', station_key],
+          ['dateutc', (now().utcnow().strftime('%Y-%m-%d %H:%M:%S') | replace(' ', '+'))],
+          ['tempf', tempf],
+          ['humidity', humidity],
+          ['winddir', winddir],
+          ['windspeedmph', windspeedmph],
+          ['windgustmph', windgustmph],
+          ['baromin', baromin],
+          ['dewptf', dewptf],
+          ['rainin', rainin],
+          ['dailyrainin', dailyrainin],
+          ['solarradiation', solarradiation],
+          ['UV', UV],
+          ['softwaretype', 'HomeAssistant'],
+          ['action', 'updateraw']
+        ] %}
+      {% if i[1] != 'none' and i[1] != '' %}
+        {% set data.sensors = data.sensors + ['{}={}'.format(i[0], i[1])] %}
+      {% endif %}
+    {% endfor %}
+    {{ data.sensors | join('&') }}
+
+action:
+  - alias: "Check if station_id and station_key exist"
+    if: >
+      {{ station_id != '' and station_key != '' }}
+    then:
+      - service: !input curl_command_service
+        data:
+          url: "https://pwsupdate.pwsweather.com/api/v1/submitwx?{{ payload }}"
+      - service: system_log.write
+        data:
+          level: info
+          message: "HTTP request sent to PWSWeather API. Station ID: {{ station_id }}, API Key: {{ station_key }}."

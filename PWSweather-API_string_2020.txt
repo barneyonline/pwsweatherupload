@@ -1,0 +1,29 @@
+SAMPLE STRING TO UPDATE DATA ON PWSWEATHER.com
+
+https://pwsupdate.pwsweather.com/api/v1/submitwx?ID=STATIONID&PASSWORD=password&dateutc=2000-12-01+15:20:01&winddir=225&windspeedmph=0.0&windgustmph=0.0&tempf=34.88&rainin=0.06&dailyrainin=0.06&monthrainin=1.02&yearrainin=18.26&baromin=29.49&dewptf=30.16&humidity=83&weather=OVC&solarradiation=183&UV=5.28&softwaretype=Examplever1.1&action=updateraw
+
+All parameters are optional except for the ones marked with *.
+If your software or hardware doesn't support a parameter it can be omitted from the string.
+
+
+ID *		Station ID as registered
+PASSWORD *	Station specific API Key from Admin page
+dateutc	*	Date and time in the format of year-mo-da+hour:min:sec
+winddir		Wind direction in degrees
+windspeedmph	Wind speed in miles per hour
+windgustmph	Wind gust in miles per hour
+tempf		Temperature in degrees fahrenheit
+rainin		Hourly rain in inches
+dailyrainin	Daily rain in inches
+monthrainin	Monthly rain in inches
+yearrainin	Seasonal rain in inches (usually local meteorological year)
+baromin		Barometric pressure in inches
+dewptf		Dew point in degrees fahrenheit
+humidity	Humidity in percent
+weather		Current weather or sky conditions using standard METAR abbreviations and intensity (e.g. -RA, +SN, SKC, etc.)
+solarradiation	Solar radiation
+UV		UV
+softwaretype *	Software type
+
+The string always concludes with action=updateraw to indicate the end of the readings
+For more information contact AerisWeather Support: https://www.aerisweather.com/support/
