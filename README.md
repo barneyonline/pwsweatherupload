@@ -18,3 +18,7 @@ shell_command:
 5. Enter your Station ID and API Key, then any weather values to share.
 6. Ensure you select an entity to trigger data uploads (e.g. a temperature sensor).
 7. Save Automation.
+
+## Credits
+* [David Defreest House](https://github.com/OurColonial) for sharing PWS Weather API spec in the [WeatherLink-to-PWSweather](https://github.com/OurColonial/WeatherLink-to-PWSweather) script
+* [Dirk van Donkelaar](https://community.home-assistant.io/u/dvandonkelaar/summary) for providing baseline blueprint structure as part of the [WUnderground data uploader blueprint](https://community.home-assistant.io/t/wunderground-data-uploader/330332)
