@@ -239,7 +239,8 @@ variables:
       {% set T_C = (T - 32) / 1.8 %}
       {% set A = 17.27 %}
       {% set B = 237.7 %}
-      {% set alpha = (A * T_C / (B + T_C)) + (RH/100) %}
+      {# Calculate alpha using the natural logarithm of RH/100 #}
+      {% set alpha = (A * T_C / (B + T_C)) + log(RH/100) %}
       {% set dewpt_C = (B * alpha) / (A - alpha) %}
       {% set dewpt_F = (dewpt_C * 1.8) + 32 %}
       {{ dewpt_F }}
