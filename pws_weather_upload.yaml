@@ -2,6 +2,8 @@ blueprint:
   name: PWS Weather Upload
   description: >
     Upload weather data from Home Assistant to PWSWeather API.
+    Refer to `PWSweather-API_string_2020.txt` for a list of API parameters
+    supported by PWSWeather.
 
     As a pre-requisite, add the following to your configuration.yaml:
     shell_command:
@@ -108,6 +110,13 @@ blueprint:
       selector:
         text: {}
       default: shell_command.curl_post
+    enable_logging:
+      name: Enable Logging
+      description: Log upload attempts to `system_log`. The API key is never
+        recorded.
+      selector:
+        boolean: {}
+      default: true
 
 mode: single
 max_exceeded: silent
@@ -130,6 +139,7 @@ variables:
   solarradiation_entity: !input solarradiation_entity
   UV_entity: !input UV_entity
   calculate_dewpt: !input calculate_dewpt
+  enable_logging: !input enable_logging
 
   baromin: >
     {% if baromin_entity != '' and states(baromin_entity) is not none %}
@@ -282,7 +292,14 @@ action:
       - service: !input curl_command_service
         data:
           url: "https://pwsupdate.pwsweather.com/api/v1/submitwx?{{ payload }}"
+      - if: "{{ enable_logging }}"
+        then:
+          - service: system_log.write
+            data:
+              level: info
+              message: "HTTP request sent to PWSWeather API. Station ID: {{ station_id }}."
+    else:
       - service: system_log.write
         data:
-          level: info
-          message: "HTTP request sent to PWSWeather API. Station ID: {{ station_id }}, API Key: {{ station_key }}."
+          level: warning
+          message: "Station ID or API Key not provided. PWSWeather upload skipped."
