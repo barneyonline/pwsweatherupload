@@ -6,8 +6,10 @@ blueprint:
     supported by PWSWeather.
 
     As a pre-requisite, add the following to your configuration.yaml:
-    shell_command:
-      curl_post: "curl -X POST \"{{ url }}\""
+    rest_command:
+      pws_upload:
+        url: "{{ url }}"
+        method: POST
 
   domain: automation
   input:
@@ -105,11 +107,23 @@ blueprint:
           filter:
             domain: sensor
       default: ''
-    curl_command_service:
-      name: CURL Command Service
+    rest_command_service:
+      name: REST Command Service
       selector:
         text: {}
-      default: shell_command.curl_post
+      default: rest_command.pws_upload
+    min_upload_interval:
+      name: Minimum Upload Interval (minutes)
+      description: >
+        Minimum number of minutes between uploads. Set to 0 to disable
+        throttling.
+      selector:
+        number:
+          min: 0
+          max: 60
+          mode: box
+          unit_of_measurement: minutes
+      default: 0
     enable_logging:
       name: Enable Logging
       description: Log upload attempts to `system_log`. The API key is never
@@ -140,6 +154,7 @@ variables:
   UV_entity: !input UV_entity
   calculate_dewpt: !input calculate_dewpt
   enable_logging: !input enable_logging
+  min_upload_interval: !input min_upload_interval
 
   baromin: >
     {% if baromin_entity != '' and states(baromin_entity) is not none and states(baromin_entity) not in ['unknown', 'unavailable'] %}
@@ -284,12 +299,26 @@ variables:
     {% endfor %}
     {{ data.sensors | join('&') }}
 
+condition:
+  - condition: template
+    value_template: >
+      {% if min_upload_interval | int == 0 %}
+        true
+      {% else %}
+        {% set last = state_attr(this.entity_id, 'last_triggered') %}
+        {% if last %}
+          {{ (as_timestamp(now()) - as_timestamp(last)) > (min_upload_interval | int * 60) }}
+        {% else %}
+          true
+        {% endif %}
+      {% endif %}
+
 action:
-  - alias: "Check if station_id and station_key exist"
+  - alias: "Check credentials and send data"
     if: >
       {{ station_id != '' and station_key != '' }}
     then:
-      - service: !input curl_command_service
+      - service: !input rest_command_service
         data:
           url: "https://pwsupdate.pwsweather.com/api/v1/submitwx?{{ payload }}"
       - if: "{{ enable_logging }}"
