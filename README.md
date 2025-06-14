@@ -24,7 +24,13 @@ rest_command:
 6. Ensure you select an entity to trigger data uploads (e.g. a temperature sensor).
 7. Optionally set a **Minimum Upload Interval** if you want to throttle how
    often data is sent to PWSWeather.
-8. Save Automation.
+8. Choose any extra sensors you wish to include such as **Monthly** or
+   **Yearly Rainfall** and set a **Weather Condition** string if desired.
+9. Override the **Software Type** if you want a custom value.
+10. Save Automation.
+
+When logging is enabled, the blueprint records the HTTP status code returned
+by the PWSWeather API so you can confirm successful uploads.
 
 The file `PWSweather-API_string_2020.txt` lists all parameters supported by the
 PWSWeather API. Use it as a reference when deciding which sensors to include.
