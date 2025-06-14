@@ -80,6 +80,31 @@ blueprint:
           domain: sensor
           device_class: precipitation
       default: ''
+    monthrainin_entity:
+      name: Monthly Rainfall (in millimeters or inches)
+      selector:
+        entity:
+          domain: sensor
+          device_class: precipitation
+      default: ''
+    yearrainin_entity:
+      name: Yearly Rainfall (in millimeters or inches)
+      selector:
+        entity:
+          domain: sensor
+          device_class: precipitation
+      default: ''
+    weather_condition:
+      name: Weather Condition (e.g. -RA, +SN, SKC)
+      selector:
+        text: {}
+      default: ''
+    softwaretype:
+      name: Software Type
+      description: Sent as the `softwaretype` parameter.
+      selector:
+        text: {}
+      default: HomeAssistant
     solarradiation_entity:
       name: Solar Radiation Sensor (in W/m2)
       selector:
@@ -150,8 +175,12 @@ variables:
   windgustmph_entity: !input windgustmph_entity
   rainin_entity: !input rainin_entity
   dailyrainin_entity: !input dailyrainin_entity
+  monthrainin_entity: !input monthrainin_entity
+  yearrainin_entity: !input yearrainin_entity
   solarradiation_entity: !input solarradiation_entity
   UV_entity: !input UV_entity
+  weather_condition: !input weather_condition
+  softwaretype: !input softwaretype
   calculate_dewpt: !input calculate_dewpt
   enable_logging: !input enable_logging
   min_upload_interval: !input min_upload_interval
@@ -242,6 +271,30 @@ variables:
       none
     {% endif %}
 
+  monthrainin: >
+    {% if monthrainin_entity != '' and states(monthrainin_entity) is not none and states(monthrainin_entity) not in ['unknown', 'unavailable'] %}
+      {% set unit = state_attr(monthrainin_entity, 'unit_of_measurement') %}
+      {% if unit == 'mm' %}
+        {{ (states(monthrainin_entity) | float) * 0.0393701 }}
+      {% else %}
+        {{ states(monthrainin_entity) | float }}
+      {% endif %}
+    {% else %}
+      none
+    {% endif %}
+
+  yearrainin: >
+    {% if yearrainin_entity != '' and states(yearrainin_entity) is not none and states(yearrainin_entity) not in ['unknown', 'unavailable'] %}
+      {% set unit = state_attr(yearrainin_entity, 'unit_of_measurement') %}
+      {% if unit == 'mm' %}
+        {{ (states(yearrainin_entity) | float) * 0.0393701 }}
+      {% else %}
+        {{ states(yearrainin_entity) | float }}
+      {% endif %}
+    {% else %}
+      none
+    {% endif %}
+
   solarradiation: >
     {% if solarradiation_entity != '' and states(solarradiation_entity) is not none and states(solarradiation_entity) not in ['unknown', 'unavailable'] %}
       {{ states(solarradiation_entity) | float }}
@@ -252,6 +305,13 @@ variables:
   UV: >
     {% if UV_entity != '' and states(UV_entity) is not none and states(UV_entity) not in ['unknown', 'unavailable'] %}
       {{ states(UV_entity) | int }}
+    {% else %}
+      none
+    {% endif %}
+
+  weather: >
+    {% if weather_condition != '' %}
+      {{ weather_condition }}
     {% else %}
       none
     {% endif %}
@@ -288,9 +348,12 @@ variables:
           ['dewptf', dewptf],
           ['rainin', rainin],
           ['dailyrainin', dailyrainin],
+          ['monthrainin', monthrainin],
+          ['yearrainin', yearrainin],
           ['solarradiation', solarradiation],
           ['UV', UV],
-          ['softwaretype', 'HomeAssistant'],
+          ['weather', weather],
+          ['softwaretype', softwaretype],
           ['action', 'updateraw']
         ] %}
       {% if i[1] != 'none' and i[1] != '' %}
@@ -319,6 +382,7 @@ action:
       {{ station_id != '' and station_key != '' }}
     then:
       - service: !input rest_command_service
+        response_variable: resp
         data:
           url: "https://pwsupdate.pwsweather.com/api/v1/submitwx?{{ payload }}"
       - if: "{{ enable_logging }}"
@@ -326,7 +390,9 @@ action:
           - service: system_log.write
             data:
               level: info
-              message: "HTTP request sent to PWSWeather API. Station ID: {{ station_id }}."
+              message: >
+                Upload response {{ resp.status | default('unknown') }} from
+                PWSWeather API for Station ID {{ station_id }}.
     else:
       - service: system_log.write
         data:
