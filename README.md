@@ -2,13 +2,15 @@
 Upload weather data from Home Assistant to a PWS Weather station
 
 ## Setup
-1. Add the following lines to your Home Assistant configuration.yaml. This
-   defines a `shell_command` named `curl_post` that will be used by the
-   blueprint to perform the HTTP request to PWSWeather. Your Station ID and
+1. Add the following lines to your Home Assistant `configuration.yaml`. This
+   defines a `rest_command` named `pws_upload` that the blueprint uses to send
+   data to PWSWeather without spawning an external process. Your Station ID and
    API key will be passed as part of the request URL:
 ```
-shell_command:
-  curl_post: "curl -X POST \"{{ url }}\""
+rest_command:
+  pws_upload:
+    url: "{{ url }}"
+    method: POST
 ```
 
 2. Restart Home Assistant.
@@ -20,7 +22,15 @@ shell_command:
 
 5. Enter your Station ID and API Key, then any weather values to share.
 6. Ensure you select an entity to trigger data uploads (e.g. a temperature sensor).
-7. Save Automation.
+7. Optionally set a **Minimum Upload Interval** if you want to throttle how
+   often data is sent to PWSWeather.
+8. Choose any extra sensors you wish to include such as **Monthly** or
+   **Yearly Rainfall** and set a **Weather Condition** string if desired.
+9. Override the **Software Type** if you want a custom value.
+10. Save Automation.
+
+When logging is enabled, the blueprint records the HTTP status code returned
+by the PWSWeather API so you can confirm successful uploads.
 
 The file `PWSweather-API_string_2020.txt` lists all parameters supported by the
 PWSWeather API. Use it as a reference when deciding which sensors to include.
