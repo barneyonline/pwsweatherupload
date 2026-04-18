@@ -131,7 +131,7 @@ blueprint:
           multiple: true
           filter:
             domain: sensor
-      default: ''
+      default: []
     rest_command_service:
       name: REST Command Service
       selector:
@@ -184,127 +184,148 @@ variables:
   calculate_dewpt: !input calculate_dewpt
   enable_logging: !input enable_logging
   min_upload_interval: !input min_upload_interval
+  invalid_states:
+    - ''
+    - none
+    - unknown
+    - unavailable
 
   baromin: >
-    {% if baromin_entity != '' and states(baromin_entity) is not none and states(baromin_entity) not in ['unknown', 'unavailable'] %}
+    {% set state = states(baromin_entity) %}
+    {% if baromin_entity != '' and state | lower not in invalid_states %}
       {% set unit = state_attr(baromin_entity, 'unit_of_measurement') %}
       {% if unit == 'hPa' %}
-        {{ (states(baromin_entity) | float) / 33.8639 }}
+        {{ (state | float) / 33.8639 }}
       {% else %}
-        {{ states(baromin_entity) | float }}
+        {{ state | float }}
       {% endif %}
     {% else %}
       none
     {% endif %}
 
   tempf: >
-    {% if tempf_entity != '' and states(tempf_entity) is not none and states(tempf_entity) not in ['unknown', 'unavailable'] %}
+    {% set state = states(tempf_entity) %}
+    {% if tempf_entity != '' and state | lower not in invalid_states %}
       {% set unit = state_attr(tempf_entity, 'unit_of_measurement') %}
       {% if unit == '°C' %}
-        {{ (states(tempf_entity) | float) * 1.8 + 32 }}
+        {{ (state | float) * 1.8 + 32 }}
       {% else %}
-        {{ states(tempf_entity) | float }}
+        {{ state | float }}
       {% endif %}
     {% else %}
       none
     {% endif %}
 
   humidity: >
-    {% if humidity_entity != '' and states(humidity_entity) is not none and states(humidity_entity) not in ['unknown', 'unavailable'] %}
-      {{ states(humidity_entity) | float }}
+    {% set state = states(humidity_entity) %}
+    {% if humidity_entity != '' and state | lower not in invalid_states %}
+      {{ state | float }}
     {% else %}
       none
     {% endif %}
 
   winddir: >
-    {% if winddir_entity != '' and states(winddir_entity) is not none and states(winddir_entity) not in ['unknown', 'unavailable'] %}
-      {{ states(winddir_entity) | float }}
+    {% set state = states(winddir_entity) %}
+    {% if winddir_entity != '' and state | lower not in invalid_states %}
+      {{ state | float }}
     {% else %}
       none
     {% endif %}
 
   windspeedmph: >
-    {% if windspeedmph_entity != '' and states(windspeedmph_entity) is not none and states(windspeedmph_entity) not in ['unknown', 'unavailable'] %}
+    {% set state = states(windspeedmph_entity) %}
+    {% if windspeedmph_entity != '' and state | lower not in invalid_states %}
       {% set unit = state_attr(windspeedmph_entity, 'unit_of_measurement') %}
       {% if unit == 'km/h' %}
-        {{ (states(windspeedmph_entity) | float) * 0.621371 }}
+        {{ (state | float) * 0.621371 }}
+      {% elif unit == 'm/s' %}
+        {{ (state | float) * 2.23694 }}
       {% else %}
-        {{ states(windspeedmph_entity) | float }}
+        {{ state | float }}
       {% endif %}
     {% else %}
       none
     {% endif %}
 
   windgustmph: >
-    {% if windgustmph_entity != '' and states(windgustmph_entity) is not none and states(windgustmph_entity) not in ['unknown', 'unavailable'] %}
+    {% set state = states(windgustmph_entity) %}
+    {% if windgustmph_entity != '' and state | lower not in invalid_states %}
       {% set unit = state_attr(windgustmph_entity, 'unit_of_measurement') %}
       {% if unit == 'km/h' %}
-        {{ (states(windgustmph_entity) | float) * 0.621371 }}
+        {{ (state | float) * 0.621371 }}
+      {% elif unit == 'm/s' %}
+        {{ (state | float) * 2.23694 }}
       {% else %}
-        {{ states(windgustmph_entity) | float }}
+        {{ state | float }}
       {% endif %}
     {% else %}
       none
     {% endif %}
 
   rainin: >
-    {% if rainin_entity != '' and states(rainin_entity) is not none and states(rainin_entity) not in ['unknown', 'unavailable'] %}
+    {% set state = states(rainin_entity) %}
+    {% if rainin_entity != '' and state | lower not in invalid_states %}
       {% set unit = state_attr(rainin_entity, 'unit_of_measurement') %}
       {% if unit == 'mm' %}
-        {{ (states(rainin_entity) | float) * 0.0393701 }}
+        {{ (state | float) * 0.0393701 }}
       {% else %}
-        {{ states(rainin_entity) | float }}
+        {{ state | float }}
       {% endif %}
     {% else %}
       none
     {% endif %}
 
   dailyrainin: >
-    {% if dailyrainin_entity != '' and states(dailyrainin_entity) is not none and states(dailyrainin_entity) not in ['unknown', 'unavailable'] %}
+    {% set state = states(dailyrainin_entity) %}
+    {% if dailyrainin_entity != '' and state | lower not in invalid_states %}
       {% set unit = state_attr(dailyrainin_entity, 'unit_of_measurement') %}
       {% if unit == 'mm' %}
-        {{ (states(dailyrainin_entity) | float) * 0.0393701 }}
+        {{ (state | float) * 0.0393701 }}
       {% else %}
-        {{ states(dailyrainin_entity) | float }}
+        {{ state | float }}
       {% endif %}
     {% else %}
       none
     {% endif %}
 
   monthrainin: >
-    {% if monthrainin_entity != '' and states(monthrainin_entity) is not none and states(monthrainin_entity) not in ['unknown', 'unavailable'] %}
+    {% set state = states(monthrainin_entity) %}
+    {% if monthrainin_entity != '' and state | lower not in invalid_states %}
       {% set unit = state_attr(monthrainin_entity, 'unit_of_measurement') %}
       {% if unit == 'mm' %}
-        {{ (states(monthrainin_entity) | float) * 0.0393701 }}
+        {{ (state | float) * 0.0393701 }}
       {% else %}
-        {{ states(monthrainin_entity) | float }}
+        {{ state | float }}
       {% endif %}
     {% else %}
       none
     {% endif %}
 
   yearrainin: >
-    {% if yearrainin_entity != '' and states(yearrainin_entity) is not none and states(yearrainin_entity) not in ['unknown', 'unavailable'] %}
+    {% set state = states(yearrainin_entity) %}
+    {% if yearrainin_entity != '' and state | lower not in invalid_states %}
       {% set unit = state_attr(yearrainin_entity, 'unit_of_measurement') %}
       {% if unit == 'mm' %}
-        {{ (states(yearrainin_entity) | float) * 0.0393701 }}
+        {{ (state | float) * 0.0393701 }}
       {% else %}
-        {{ states(yearrainin_entity) | float }}
+        {{ state | float }}
       {% endif %}
     {% else %}
       none
     {% endif %}
 
   solarradiation: >
-    {% if solarradiation_entity != '' and states(solarradiation_entity) is not none and states(solarradiation_entity) not in ['unknown', 'unavailable'] %}
-      {{ states(solarradiation_entity) | float }}
+    {% set state = states(solarradiation_entity) %}
+    {% if solarradiation_entity != '' and state | lower not in invalid_states %}
+      {{ state | float }}
     {% else %}
       none
     {% endif %}
 
   UV: >
-    {% if UV_entity != '' and states(UV_entity) is not none and states(UV_entity) not in ['unknown', 'unavailable'] %}
-      {{ states(UV_entity) | int }}
+    {% set state = states(UV_entity) %}
+    {% if UV_entity != '' and state | lower not in invalid_states %}
+      {{ state | float }}
     {% else %}
       none
     {% endif %}
