@@ -1,0 +1,72 @@
+name: Validate Home Assistant blueprints
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "pws_weather_upload.yaml"
+      - "blueprints/**/*.ya?ml"
+  push:
+    branches:
+      - main
+    paths:
+      - "pws_weather_upload.yaml"
+      - "blueprints/**/*.ya?ml"
+
+jobs:
+  blueprint-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Home Assistant Core
+        run: |
+          python --version
+          pip install --upgrade pip
+          pip install "homeassistant==2025.6.0"
+          python - <<'PY'
+          from importlib.metadata import version
+          import sys
+          print("HA OK", version("homeassistant"), sys.version)
+          PY
+
+      - name: Determine files to validate
+        id: files
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            CHANGED=$(
+              git diff --name-only "${{ github.event.pull_request.base.sha }}" \
+                                  "${{ github.sha }}" |
+              grep -E '^(pws_weather_upload\.yaml|blueprints/.*\.ya?ml)$' || true
+            )
+            {
+              echo "files<<EOF"
+              echo "${CHANGED}"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            FILES=$(
+              find . -type f \( -name '*.yaml' -o -name '*.yml' \) \
+                \( -name 'pws_weather_upload.yaml' -o -path './blueprints/*' \) |
+              sed 's#^\./##' |
+              sort
+            )
+            {
+              echo "files<<EOF"
+              echo "${FILES}"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate blueprints
+        env:
+          FILES: ${{ steps.files.outputs.files }}
+        run: |
+          python scripts/ha_blueprint_validate.py ${FILES:-pws_weather_upload.yaml blueprints/**/*.yaml blueprints/**/*.yml}
